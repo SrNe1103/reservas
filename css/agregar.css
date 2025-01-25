@@ -1,0 +1,65 @@
+#preview{
+    border: solid 1px #000000;
+    background-color: #a4f771d7;
+    padding: 10px;
+    left: 30em;
+    width: 40%;
+    position: absolute;
+}
+#preview h3{
+    font-size: 2em;
+    margin: 5px;
+}
+#preview p{
+    font-size: 1.3em;
+}
+#preview span{
+    border: solid 1px #000000;
+    border-radius: 4px;
+    background-color: #a4f771;
+    padding: 5px;
+}
+
+form{
+    margin: 0;
+    padding: 5px 15px;
+    border-radius: 15px;
+    background-color: #a4f771d7;
+    width: fit-content;
+}
+
+form p, form div {
+    font-size: 1.5em;
+    border: solid 1px #000000;
+    border-radius: 10px;
+    padding: 0.5em;
+    margin: 10px 0;
+}
+input, select{
+    font-size: 0.9em;
+    margin: 10px 0;
+}
+#submit{
+    margin: 0;
+    font-size: 1.3em;
+    background-color: #fff;
+    transition: background-color 0.5s;
+}
+#submit:hover{
+    background-color: #b9b9b9;
+}
+
+.hidden{
+    font-size: 1em;
+    padding: 0;
+    position: relative;
+    left: -1000px;
+}
+
+.visible{
+    font-size: 1em;
+    padding: 0;
+    border: none;
+    position: relative;
+    left: 0;
+}
