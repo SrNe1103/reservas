@@ -2,46 +2,67 @@
     border: solid 1px #000000;
     background-color: #a4f771d7;
     padding: 10px;
-    left: 30em;
-    width: 40%;
+    right: 1em;
+    width: 35%;
     position: absolute;
 }
 #preview h3{
     font-size: 2em;
     margin: 5px;
 }
-#preview p{
-    font-size: 1.3em;
+table {
+    font-size: 1.5em;
+}
+td {
+    padding: 0.4em;
 }
 #preview span{
-    border: solid 1px #000000;
-    border-radius: 4px;
-    background-color: #a4f771;
-    padding: 5px;
+    font-size: 0.9em;
 }
 
+h3{
+    margin: 0 5px;
+    font-size: 1.5em;
+    text-decoration: underline;
+}
 form{
-    margin: 0;
+    margin: 10px 0;
     padding: 5px 15px;
     border-radius: 15px;
     background-color: #a4f771d7;
-    width: fit-content;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    width: 60%;
+}
+
+#add_cliente{
+    font-size: 1em;
+    margin: 10px;
+}
+
+#add_reserva{
+    margin: 5px;
+    
 }
 
 form p, form div {
-    font-size: 1.5em;
+    font-size: 1.4em;
     border: solid 1px #000000;
     border-radius: 10px;
-    padding: 0.5em;
-    margin: 10px 0;
+    width: 13em;
+    padding: 0.4em;
+    margin: 10px 5px;
 }
 input, select{
     font-size: 0.9em;
     margin: 10px 0;
 }
 #submit{
-    margin: 0;
-    font-size: 1.3em;
+    margin: 5px;
+    position: relative;
+    left: 1%;
+    font-size: 2em;
     background-color: #fff;
     transition: background-color 0.5s;
 }
