@@ -1,3 +1,7 @@
+pre{
+    font-size: 1.3em;
+}
+
 #preview{
     border: solid 1px #000000;
     background-color: #a4f771d7;
@@ -35,7 +39,9 @@ form{
     align-items: flex-start;
     width: 60%;
 }
-
+#nacionalidad{
+    width: inherit;
+}
 #add_cliente{
     font-size: 1em;
     margin: 10px;

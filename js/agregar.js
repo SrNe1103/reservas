@@ -58,7 +58,7 @@ function update_preview() {
     // check if there are more than 1 reservation
     let extra = false
     let reserva = document.querySelectorAll('select');
-    if (reserva.length > 1) {
+    if (reserva.length > 2) {
         extra = true
     };
     // loop to update preview elements
