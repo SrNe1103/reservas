@@ -2,11 +2,12 @@
 
 require_once "pdo.php";
 // restore data for the last submit try
-$values = ['ini_date','end_date','reserva','cliente','telefono','n_personas','total','abono','notas','rut','correo'];
+$values = ['inicio','final','reserva0','cliente','telefono','n_personas','total','abono','notas','rut','correo','cliente_id'];
 for ($i = 0 ; $i < count($values) ; $i++) {
     $item = $values[$i];
     $$item = isset($_POST[$values[$i]]) ? $_POST[$values[$i]] : '';
 }
+if (!isset($_POST['abono'])){ $abono = 0;}
 
 // check for new client
 $check_cliente = false;
@@ -19,14 +20,20 @@ $actualizar_cliente = false;
 $datos_antes = false;
 $datos_anteriores = false;
 $datos_nuevos = false;
-$cliente_id = false;
 
-if ((isset($_POST['Agregar']) || isset($_POST['Actualizar'])) && isset($_POST['cliente']) && isset($_POST['telefono'])){
-    $check_cliente = $pdo->prepare("SELECT * FROM clientes WHERE nombre = :nombre");
-    $check_cliente->execute(array(':nombre' => $_POST['cliente']));
+
+if ((isset($_POST['Agregar']) || isset($_POST['Actualizar'])) && isset($_POST['cliente']) || isset($_POST['telefono'])){
+    if (isset($_POST['cliente'])){
+        $check_cliente = $pdo->prepare("SELECT * FROM clientes WHERE nombre = :nombre");
+        $check_cliente->execute(array(':nombre' => $_POST['cliente']));
+    } elseif (isset($_POST['telefono'])){
+        $check_cliente = $pdo->prepare("SELECT * FROM clientes WHERE telefono = :telefono");
+        $check_cliente->execute(array(':telefono' => $_POST['telefono']));
+    }
+    
     
     $datos_anteriores = $check_cliente->fetch(PDO::FETCH_ASSOC); // Verdadero si existe cliente
-
+    echo var_dump(isset($_POST['cliente']));
     if (isset($_POST['Actualizar'])){ //si se selecciona actualizar
         $cliente_id = $datos_anteriores['cliente_id']; //Recoger id de datos anteriores
         $sql = "UPDATE clientes SET telefono = :telefono WHERE cliente_id = :cliente_id";
@@ -66,23 +73,23 @@ if ((isset($_POST['Agregar']) || isset($_POST['Actualizar'])) && isset($_POST['c
         
     } elseif ($datos_anteriores){ //si ya existe un cliente
         $datos_nuevos=[$_POST['telefono'],$_POST['telefono']];
-        if ($datos_anteriores)
-        $check_cliente = "El cliente existe ¿desea actualizarlo?";
+        $cliente_id = $datos_anteriores['cliente_id']; //Recoger id de datos anteriores
+        $check_cliente = "El cliente existe ¿desea actualizarlo? Si continúa se usarán los datos anteriores.";
         
         $actualizar_cliente = '<input type="submit" id="update_cliente" name="Actualizar" value="Actualizar">'; // agregar botón para actualizar
         
         // Mostrar datos anteriores y nuevos para poder corregir si hay errores
-        $datos_antes = "\n-Datos Anteriores: Teléfono -> ".htmlentities($datos_anteriores['telefono']).
+        $datos_antes = "<pre>Datos Guardados: Teléfono -> ".htmlentities($datos_anteriores['telefono']).
             "\nRut -> ".htmlentities($datos_anteriores['rut']).
             "\nCorreo -> ".htmlentities($datos_anteriores['correo']).
-            "\nNacionalidad -> ".htmlentities($datos_anteriores['nacionalidad']);
+            "\nNacionalidad -> ".htmlentities($datos_anteriores['nacionalidad'])."</pre><pre>";
 
-        $datos_nuevos = "\n\n-Datos Nuevos: Teléfono -> ".htmlentities($_POST['telefono']).
+        $datos_nuevos = "Datos Nuevos: Teléfono -> ".htmlentities($_POST['telefono']).
             "\nRut -> ".htmlentities($_POST['rut']).
             "\nCorreo -> ".htmlentities($_POST['correo']).
-            "\nNacionalidad -> ".htmlentities($_POST['nacionalidad']);
+            "\nNacionalidad -> ".htmlentities($_POST['nacionalidad'])."</pre>";
 
-    } else { // si no existe el cliente, agregarlo
+    } elseif (isset($_POST['cliente']) && strlen($_POST['telefono'])==9) { // si no existe el cliente, agregarlo
         $sql = "INSERT INTO clientes (nombre, telefono) VALUES (:nombre, :telefono)";
         $stmt = $pdo->prepare($sql);
         $stmt->execute(array(
@@ -123,10 +130,14 @@ if ((isset($_POST['Agregar']) || isset($_POST['Actualizar'])) && isset($_POST['c
             }
 
             $check_cliente = "Cliente añadido exitosamente\n";
-        } else {
-            $cliente_id = false;
-            echo "ERROR IN CLIENT INSERTION";
         }
+    } elseif (isset($_POST['cliente'])) {
+            $cliente_id = false;
+            $check_cliente = "Falta el número de teléfono";
+        } elseif (isset($_POST['telefono'])){
+            $cliente_id = false;
+            $check_cliente = "Falta el nombre del cliente";
+        
     
     }    
 }
@@ -136,36 +147,163 @@ if ((isset($_POST['Agregar']) || isset($_POST['Actualizar'])) && isset($_POST['c
 // Añadir nueva reserva
 
 $check_reserva = false;
-$reserva_duplicada = [false];
-$cabs = [false];
+$reserva_duplicada = ['inicio' => false,
+                    'final' => false,
+                    'cliente' => false,
+                    'telefono' => false,
+                    'n_personas' => false,
+                    'total' => false,
+                    'abono' => false,
+                    'saldo' => false,
+                    'notas' => false];
+$cabs = ['inicio' => false,
+        'final' => false,
+        'cliente' => false,
+        'telefono' => false,
+        'n_personas' => false,
+        'total' => false,
+        'abono' => false,
+        'saldo' => false,
+        'notas' => false];
 
+$duplicada = 'hidden';
+$cabanas = [];
+$cliente_asociado = ['telefono' => false];
+$topes = [];
 
-if (isset($_POST['ini_date']) && isset($_POST['end_date']) && isset($_POST['reserva']) && isset($_POST['n_personas']) && isset($_POST['total']) && isset($_POST['abono'])) {
-    $check_reserva = $pdo->prepare("SELECT * FROM reservas WHERE inicio = :ini_date AND final = :end_date AND cliente_id = :cliente_id AND n_personas = :n_personas");
+if (isset($_POST['inicio']) && isset($_POST['final']) && isset($_POST['reserva0']) && isset($_POST['n_personas']) && isset($_POST['total']) && isset($_POST['abono']) && $cliente_id) {
+    $check_reserva = $pdo->prepare("SELECT * FROM reservas WHERE inicio = :inicio AND final = :final AND cliente_id = :cliente_id");
     $check_reserva->execute(array(
-        ':ini_date' => $_POST['ini_date'],
-        ':end_date' => $_POST['end_date'],
-        ':cliente_id' => $cliente_id,
-        ':n_personas' => $_POST['n_personas']
+        ':inicio' => $_POST['inicio'],
+        ':final' => $_POST['final'],
+        ':cliente_id' => $cliente_id
         ));
+      
+    
+    $row = $check_reserva->fetch(PDO::FETCH_ASSOC);
 
-    if ($row = $check_reserva->fetch(PDO::FETCH_ASSOC)){ //si existe la misma reserva
+    if ($row){ //si existe la misma reserva
+        
+        $duplicada = ""; //muestra una tabla con los datos
 
         $reserva_id = $row['reserva_id'];
+        
         $reserva_duplicada = $row;
-        $check_reserva = $pdo->prepare("SELECT cab_id FROM asign WHERE reserva_id = :reserva_id");
+        //busca las cabañas reservadas
+        $check_reserva = $pdo->prepare("SELECT * FROM assign WHERE reserva_id = :reserva_id");
         $check_reserva->execute(array(':reserva_id' => $reserva_id));
-        $cliente_asociado = $pdo->prepare("SELECT nombre FROM cliente WHERE cliente_id = :cliente_id");
+        //busca el nombre del cliente
+        $cliente_asociado = $pdo->prepare("SELECT * FROM clientes WHERE cliente_id = :cliente_id");
         $cliente_asociado->execute(array(':cliente_id' =>  $cliente_id));
+        //guarda ambos datos
         $cliente_asociado = $cliente_asociado->fetch(PDO::FETCH_ASSOC);
-        $cabs = $check_reserva->fetch(PDO::FETCH_ASSOC);
-        $reserva_duplicada[] = $cliente_asociado['nombre'];
-        $check_reserva = 'Esta reserva se encuentra duplicada, vaya a <a href="modificar.php">Modificar reservas</a>';
 
-    } else{
-        $check_reserva = "";
+        $cabanas = []; //lista de cabañas asociadas a la reserva
+        while ($cabs = $check_reserva->fetch(PDO::FETCH_ASSOC)){
+            $cabanas[] = $cabs['cab_id'];
+        } 
+        
+        //place holders para la cantidad de cabañas
+        $place_holders = '?' . str_repeat(', ?', count($cabanas) - 1);
+        $check_reserva = $pdo->prepare("SELECT * FROM cab WHERE cab_id IN (".$place_holders.")");
+        $check_reserva->execute($cabanas);//ejecutar con array
+        // recuperar el nombre de las cabañas
+        $cabanas = [];
+        while ($cabs = $check_reserva->fetch(PDO::FETCH_ASSOC)){
+            $cabanas[] = $cabs['cab_name'];
+        }
+        
+        $reserva_duplicada['cliente'] = $cliente_asociado['nombre'];
+        $reserva_duplicada['saldo'] = $reserva_duplicada['total']-$reserva_duplicada['abono'];
+
+        //mensaje a html
+        $check_reserva = 'Esta reserva se encuentra duplicada, vaya a <a href="modificar.php">Modificar reservas</a>. Abajo se muestran los datos de la reserva anterior.';
+
+    } elseif(true) {
+        $disponible = TRUE; //por defecto disponible
+    //busco una reserva que inicie dentro del rango a reservar
+    $buscar = $pdo->prepare("SELECT reserva_id FROM reservas WHERE inicio >= :inicio AND inicio < :final");
+    $buscar->execute(array(
+        ':inicio' => $_POST['inicio'],
+        ':final' => $_POST['final']
+    ));
+    $cabanas = [];
+    while ($cabs = $buscar->fetch(PDO::FETCH_ASSOC)){
+        $cabanas[] = $cabs['cab_name'];
+    }
+    $matches = [];
+    while ($match = $buscar->fetch(PDO::FETCH_ASSOC)){
+        $filtrar = $pdo->prepare("SELECT cab_id FROM assign WHERE reserva_id = :reserva_id");
+        $filtrar->execute(array(':reserva_id' => $match['reserva_id']));
+        $tope = $filtrar->fetch(PDO::FETCH_ASSOC);
+        if ($tope && in_array($tope, $cabanas)){ //Si se obtienen topes y el tope está dentro de la reserva, guardar el id de la reserva con la cabaña
+            $matches[] = $match['reserva_id'];
+            $disponible = false;
+        }
+        
+    }
+
+
+    foreach ($matches as $match){
+        if (array_search($match,$topes) !== false){
+        $buscar = $pdo->prepare("SELECT * FROM reservas WHERE reserva_id = :reserva_id");
+        $buscar->execute(array(':reserva_id' => $match));
+        $tope[] = $buscar->fetch(PDO::FETCH_ASSOC);}
+    }
+    $mal_hecha[] = [];
+    $mal_reservado = false;
+    $n = 0;
+    while (isset($_POST['reserva'.$n])){
+        $mal_hecha[] = $_POST['reserva'.$n];
+        $n += 1;
+    }
+    foreach (array_count_values($mal_hecha) as $mal){
+        if ($mal > 1){
+            $mal_reservado = true;
+        }
     }
 }
+    if (!$disponible) {$check_reserva = "La reserva no se puede realizar por topes";
+    } elseif ($mal_reservado) {$check_reserva = "La reserva no se puede realizar error en la selección de cabañas";
+    } else { //si no hay, agregarla
+
+        $sql = "INSERT INTO reservas (inicio, final, cliente_id, n_personas, total, abono, notas) VALUES (:inicio, :final, :cliente_id, :n_personas, :total, :abono, :notas)";
+        $insertar_reserva = $pdo->prepare($sql);
+        $insertar_reserva->execute(array(
+            ':inicio' => $_POST['inicio'],
+            ':final' => $_POST['final'],
+            ':cliente_id' => $cliente_id,
+            ':n_personas' => $_POST['n_personas'],
+            ':total' => $_POST['total'],
+            ':abono' => $_POST['abono'],
+            ':notas' => $_POST['notas']
+        )); //reserva agregada
+
+        // obtener el id de reserva
+        $check_reserva = $pdo->prepare("SELECT reserva_id FROM reservas WHERE inicio = :inicio AND final = :final AND cliente_id = :cliente_id AND n_personas = :n_personas");
+        $check_reserva->execute(array(
+            ':inicio' => $_POST['inicio'],
+            ':final' => $_POST['final'],
+            ':cliente_id' => $cliente_id,
+            ':n_personas' => $_POST['n_personas']
+            ));
+        $reserva_id = $check_reserva->fetch(PDO::FETCH_ASSOC);
+
+        $n = 0;
+        while (isset($_POST['reserva'.$n])){
+            $sql = "INSERT INTO assign (reserva_id, cab_id) VALUES (:reserva_id, :cab_id)";
+            $insertar_cab = $pdo->prepare($sql);
+            $insertar_cab->execute(array(
+                ':reserva_id' => $reserva_id['reserva_id'],
+                ':cab_id' => $_POST['reserva'.$n]
+            ));
+            $n += 1;
+        }
+
+        $check_reserva = "Reserva (".$reserva_id['reserva_id'].") realizada con éxito";
+    } 
+}
+
 ?>
 <html lang="en">
 <head>
@@ -191,15 +329,15 @@ if (isset($_POST['ini_date']) && isset($_POST['end_date']) && isset($_POST['rese
             <table border="1">
                 <tr>
                     <td>Inicio:</td>
-                    <td><span id="ini_date_p"></span></td>
+                    <td><span id="inicio_p"></span></td>
                 </tr>
                 <tr>
                     <td>Término: </td>
-                    <td><span id="end_date_p"></span></td>
+                    <td><span id="final_p"></span></td>
                 </tr>
                 <tr>
                     <td>Cabañas a reservar:</td>
-                    <td><span id="reserva_p"></span></td>
+                    <td><span id="reserva0_p"></span></td>
                 </tr>
                 <tr>
                     <td>Nombre del cliente: </td>
@@ -238,9 +376,9 @@ if (isset($_POST['ini_date']) && isset($_POST['end_date']) && isset($_POST['rese
             
             <!-- Datos del cliente -->
             <p><label for="cliente">Nombre del cliente: </label><br>
-            <input type="text" name="cliente" id="cliente" size="20" value="<?= htmlentities($cliente)?>" required></p>
+            <input type="text" name="cliente" id="cliente" size="20" value="<?= htmlentities($cliente)?>"></p>
             <p><label for="telefono">Número de teléfono: </label><br>
-            <input type="tel" name="telefono" id="telefono" maxlength="9" size="9" placeholder="912345678" pattern="[0-9]{9}" value="<?= htmlentities($telefono)?>" required></p>
+            <input type="tel" name="telefono" id="telefono" maxlength="9" size="9" placeholder="912345678" pattern="[0-9]{9}" value="<?= htmlentities($telefono)?>"></p>
             <p><label for="rut">Rut/pasaporte (opcional): </label><br>
             <input type="text" name="rut" id="rut" placeholder="11222333k"  size="13" maxlength="9" value="<?= htmlentities($rut)?>"></p>
             <p><label for="correo">Correo (opcional): </label><br>
@@ -500,12 +638,12 @@ if (isset($_POST['ini_date']) && isset($_POST['end_date']) && isset($_POST['rese
             </select></p>
 
             <!-- Si hay datos anteriores, mostrarlos -->
-            <span><?=htmlentities($check_cliente)?><br>
+            <div class="cliente"><span><?=htmlentities($check_cliente)?></span><br>
             <?= $actualizar_cliente ?>
-            <input type="submit" id="add_cliente" name="Agregar" value="Agregar"></span>
-            <pre><?= 
-            htmlentities($datos_antes) .htmlentities($datos_nuevos)
-            ?></pre>
+            <input type="submit" id="add_cliente" name="Agregar" value="Agregar"></div>
+            <?= 
+            $datos_antes .$datos_nuevos
+            ?>
             
 
         </form>
@@ -515,33 +653,32 @@ if (isset($_POST['ini_date']) && isset($_POST['end_date']) && isset($_POST['rese
         <form method="post">
             <!-- input oculto con los datos del cliente -->
             <input type="hidden" name="cliente_id" value=<?=$cliente_id?>>
-
             <!-- Selección fecha de inicio y término de la reserca -->
-            <p><label for="ini_date">Fecha de inicio de la Reserva: </label><br>
-            <input type="date" name="ini_date" id="ini_date" value="<?= htmlentities($ini_date)?>" required></p>
-            <p><label for="end_date">Fecha de término de la Reserva: </label><br>
-            <input type="date" name="end_date" id="end_date" value="<?= htmlentities($end_date)?>" required></p>
+            <p><label for="inicio">Fecha de inicio de la Reserva: </label><br>
+            <input type="date" name="inicio" id="inicio" value="<?= htmlentities($inicio)?>" required></p>
+            <p><label for="final">Fecha de término de la Reserva: </label><br>
+            <input type="date" name="final" id="final" value="<?= htmlentities($final)?>"  required></p>
 
             <!-- Selección de las cabañas a reservar -->
             <div><label for="reserva">Cabañas a reservar: </label><br>
-                <select name="reserva" id="reserva" value="<?= htmlentities($reserva)?>" required>
-                    <option value="C1">Cabaña 1</option>
-                    <option value="C2">Cabaña 2</option>
-                    <option value="C3">Cabaña 3</option>
-                    <option value="C4">Cabaña 4</option>
-                    <option value="C5">Cabaña 5</option>
-                    <option value="C6">Cabaña 6</option>
-                    <option value="C7">Cabaña 7</option>
-                    <option value="C8">Cabaña 8</option>
-                    <option value="C9">Cabaña 9</option>
-                    <option value="C10">Cabaña 10</option>
-                    <option value="C11">Cabaña 11</option>
-                    <option value="C12">Cabaña 12</option>
-                    <option value="C13">Cabaña 13</option>
-                    <option value="C14">Cabaña 14</option>
-                    <option value="C15">Cabaña 15</option>
-                    <option value="C16">Cabaña 16</option>
-                    <option value="S">Salón</option>
+                <select name="reserva0" id="reserva0" value="<?= htmlentities($reserva0)?>" required>
+                    <option value="1">Cabaña 1</option>
+                    <option value="2">Cabaña 2</option>
+                    <option value="3">Cabaña 3</option>
+                    <option value="4">Cabaña 4</option>
+                    <option value="5">Cabaña 5</option>
+                    <option value="6">Cabaña 6</option>
+                    <option value="7">Cabaña 7</option>
+                    <option value="8">Cabaña 8</option>
+                    <option value="9">Cabaña 9</option>
+                    <option value="10">Cabaña 10</option>
+                    <option value="11">Cabaña 11</option>
+                    <option value="12">Cabaña 12</option>
+                    <option value="13">Cabaña 13</option>
+                    <option value="14">Cabaña 14</option>
+                    <option value="15">Cabaña 15</option>
+                    <option value="16">Cabaña 16</option>
+                    <option value="17">Salón</option>
                 </select><br>
             <span id="add_section" class="hidden"></span>
             <button type="button" id="add_reserva">Añadir otra cabaña</button>
@@ -556,14 +693,19 @@ if (isset($_POST['ini_date']) && isset($_POST['end_date']) && isset($_POST['rese
             <input type="number" name="total" id="total" maxlength="8" min="0" max="99999999" pattern="[0-9]{8}" value="<?= htmlentities($total)?>" required></p>
             <p><label for="abono">Abono: </label><br>
             <input type="number" name="abono" id="abono" maxlength="8" min="0" max="99999999" value="<?= htmlentities($abono)?>"></p>
-            <p><label for="notas">Información adicional: </label><br>
+            <p><label  for="notas">Información adicional: </label><br>
             <textarea name="notas" id="notas" maxlength="255" cols="40" rows="10"><?= htmlentities($notas)?></textarea>
+            </p>
+            <p><label for="cliente_id">ID del cliente: </label><br>
+            <input type="number" name="cliente_id" id="cliente_id" maxlength="8" min="0" max="99999999" value="<?= htmlentities($cliente_id)?>" required>
             </p>
             <span><?=$check_reserva?></span>
             <input type="submit" value="Enviar" id="submit">
 
-        </form>
-        <table border="1">
+
+        </form >
+        
+        <table <?=$duplicada?> border="1">
             <tr>
                 <td>Inicio:</td>
                 <td><span><?= htmlentities($reserva_duplicada['inicio']) ?></span></td>
@@ -574,37 +716,80 @@ if (isset($_POST['ini_date']) && isset($_POST['end_date']) && isset($_POST['rese
             </tr>
             <tr>
                 <td>Cabañas a reservar:</td>
-                <td><span><?php if (l) {foreach ($cabs as $cab){echo $cab.", ";}} ?></span></td>
+                <td><span><?= implode(", ",$cabanas) ?></span></td>
             </tr>
             <tr>
                 <td>Nombre del cliente: </td>
-                <td><span><?= htmlentities($reserva_duplicada['']) ?></span></td>
+                <td><span><?= htmlentities($reserva_duplicada['cliente']) ?></span></td>
             </tr>
             <tr>
                 <td>Número de teléfono:</td>
-                <td><span><?= htmlentities($reserva_duplicada['final']) ?></span></td>
+                <td><span><?= htmlentities($cliente_asociado['telefono']) ?></span>
+                </td>
             </tr>
             <tr>
                 <td>Número de personas: </td>
-                <td><span id="n_personas_p"></span></td>
+                <td><span><?= htmlentities($reserva_duplicada['n_personas']) ?></span></td>
             </tr>
             <tr>
                 <td>Monto total:</td>
-                <td><span id="total_p"></span></td>
+                <td><span><?= htmlentities($reserva_duplicada['total']) ?></span></td>
             </tr>
             <tr>
                 <td>Abono: </td>
-                <td><span id="abono_p"></span></td>
+                <td><span><?= htmlentities($reserva_duplicada['abono']) ?></span></td>
             </tr>
             <tr>
-                <td>saldo: </td>
-                <td><span id="saldo_p"></span></td>
+                <td>Saldo: </td>
+                <td><span><?= htmlentities($reserva_duplicada['saldo']) ?></span></td>
             </tr>
             <tr>
                 <td>Información adicional: </td>
-                <td><span id="notas_p"></span></td>
+                <td><span><?= htmlentities($reserva_duplicada['notas']) ?></span></td>
             </tr>
         </table>
+        
+        
+        <?php
+        foreach ($topes as $tope){
+            $buscar = $pdo->prepare("SELECT nombre,telefono FROM clientes WHERE cliente_id = :cliente_id");
+            $buscar->execute(array(':cliente_id' => $tope['cliente_id']));
+            $buscar = $buscar->fetch(PDO::FETCH_ASSOC);
+            $tope['cliente'] = $buscar['nombre'];
+            $tope['telefono'] = $buscar['telefono'];
+            echo "<table>";
+            echo "<tr>
+                <td>Inicio:</td>
+                <td><span>".$tope['inicio']."</span></td>
+            </tr>
+            <tr>
+                <td>Término: </td>
+                <td><span>".$tope['final']."</span></td>
+            </tr>
+            <tr>
+                <td>Nombre del cliente: </td>
+                <td><span>".$tope['cliente']."</span></td>
+            </tr>
+            <tr>
+                <td>Número de teléfono:</td>
+                <td><span>".$tope['telefono']."</span>
+                </td>
+            </tr>
+            <tr>
+                <td>Número de personas: </td>
+                <td><span>".$tope['n_personas']."</span></td>
+            </tr>
+            <tr>
+                <td>Monto total:</td>
+                <td><span>".$tope['total']."</span></td>
+            </tr>
+            <tr>
+                <td>Información adicional: </td>
+                <td><span>".$tope['notas']."</span></td>
+            </tr>";
+            echo "</table>";
+        }
+        ?>
     </section>
     <script src="js/agregar.js"></script>
 </body>

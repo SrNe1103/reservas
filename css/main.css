@@ -2,6 +2,7 @@ body{
     margin: 20px;
     min-height: 1000px;
     background-color: #b5ff87;
+    font-family: sans-serif;
     background: linear-gradient(#b5ff87, #66c02f);
 }
 

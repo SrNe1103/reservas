@@ -2,6 +2,12 @@ pre{
     font-size: 1.3em;
 }
 
+.cliente{
+    display: inline-block;
+    font-size: 1em;
+    width: 18.5em;
+}
+
 #preview{
     border: solid 1px #000000;
     background-color: #a4f771d7;
@@ -39,10 +45,14 @@ form{
     align-items: flex-start;
     width: 60%;
 }
+form pre{
+    margin: 10px 10px;
+}
+
 #nacionalidad{
     width: inherit;
 }
-#add_cliente{
+.cliente input{
     font-size: 1em;
     margin: 10px;
 }
