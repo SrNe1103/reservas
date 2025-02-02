@@ -13,6 +13,7 @@
     <section id="calendar">
         <h2>Calendario de reservas</h2>
         <strong>Aquí ira el calendario</strong>
+        
     </section>
 </body>
 </html>
