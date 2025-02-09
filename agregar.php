@@ -15,12 +15,12 @@ for ($i = 0 ; $i < count($values) ; $i++) {
     if (isset($_POST[$item])){
         if (!isset($_SESSION[$item])) {
             $_SESSION[$item] = $_POST[$values[$i]];
-        } elseif (strlen($_SESSION[$item]) < 1) {
+        } elseif (strlen($_POST[$item]) != 0) {
             $_SESSION[$item] = $_POST[$values[$i]];
         }
         
     } elseif(!isset($_SESSION[$item])) {
-        $_SESSION[$item] = "";
+        $_SESSION[$item] = false;
     }
 }
 if (!isset($_POST['abono'])){ $abono = 0;}
@@ -36,12 +36,12 @@ $datos_anteriores = false;
 
 
 if ((isset($_POST['Agregar']) || isset($_POST['Actualizar'])) && isset($_POST['cliente']) || isset($_POST['telefono'])){
-    if (isset($_POST['cliente'])){
-        $check_cliente = $pdo->prepare("SELECT * FROM clientes WHERE nombre = :nombre");
-        $check_cliente->execute(array(':nombre' => $_POST['cliente']));
-    } elseif (isset($_POST['telefono'])){
+    if (isset($_POST['telefono']) && strlen($_POST['telefono']) == 9){
         $check_cliente = $pdo->prepare("SELECT * FROM clientes WHERE telefono = :telefono");
         $check_cliente->execute(array(':telefono' => $_POST['telefono']));
+    } elseif (isset($_POST['cliente'])){
+        $check_cliente = $pdo->prepare("SELECT * FROM clientes WHERE nombre = :nombre");
+        $check_cliente->execute(array(':nombre' => $_POST['cliente']));
     }
     
     
@@ -49,11 +49,12 @@ if ((isset($_POST['Agregar']) || isset($_POST['Actualizar'])) && isset($_POST['c
     if (isset($_POST['Actualizar']) && isset($_POST['cliente']) && isset($_POST['telefono'])){ //si se selecciona actualizar
         if (strlen($_POST['telefono']) == 9 && strlen($_POST['cliente']) > 1){
             $_SESSION['cliente_id'] = $datos_anteriores['cliente_id']; //Recoger id de datos anteriores
-            $sql = "UPDATE clientes SET telefono = :telefono WHERE cliente_id = :cliente_id";
+            $sql = "UPDATE clientes SET telefono = :telefono, nombre = :nombre WHERE cliente_id = :cliente_id";
             $stmt = $pdo->prepare($sql);
             $stmt->execute(array(
                 ':telefono' => $_POST['telefono'],
-                ':cliente_id' => $_SESSION['cliente_id'] 
+                ':cliente_id' => $_SESSION['cliente_id'],
+                ':nombre' => $_POST['cliente']
             ));
             $failure = "";
             // si hay rut, añadir rut
@@ -96,7 +97,7 @@ if ((isset($_POST['Agregar']) || isset($_POST['Actualizar'])) && isset($_POST['c
             $_SESSION['check_cliente'] = "Falta el nombre del cliente";
         } else {
             $_SESSION['cliente_id'] = false;
-            $_SESSION['check_cliente'] = "El número de teléfono debe ser numérico";
+            $_SESSION['check_cliente'] = "El teléfono debe ser numérico";
         }
         $_SESSION['cliente_id'] = $datos_anteriores['cliente_id']; //Recoger id de datos anteriores
                 
@@ -112,7 +113,7 @@ if ((isset($_POST['Agregar']) || isset($_POST['Actualizar'])) && isset($_POST['c
         
     } elseif ($datos_anteriores){ //si ya existe un cliente
         $_SESSION['cliente_id'] = $datos_anteriores['cliente_id']; //Recoger id de datos anteriores
-        $_SESSION['check_cliente'] = "El cliente existe ¿desea actualizarlo? Si continúa se usarán los datos anteriores.";
+        $_SESSION['check_cliente'] = "El cliente existe ¿desea actualizarlo? Si continúa se usarán los datos guardados.";
         
         $_SESSION['actualizar_cliente'] = '<input type="submit" id="update_cliente" name="Actualizar" value="Actualizar">'; // agregar botón para actualizar
         
@@ -276,6 +277,8 @@ if (isset($_POST['inicio']) && isset($_POST['final']) && isset($_POST['reserva0'
 
         //mensaje a html
         $_SESSION['check_reserva'] = 'Esta reserva se encuentra duplicada, vaya a <a href="modificar.php">Modificar reservas</a>. Abajo se muestran los datos de la reserva anterior.';
+        header("Location: agregar.php");
+        return;
 
     } else {
         $disponible = TRUE; //por defecto disponible
@@ -326,7 +329,11 @@ if (isset($_POST['inicio']) && isset($_POST['final']) && isset($_POST['reserva0'
         }
     }
     if (!$disponible) {$_SESSION['check_reserva'] = "La reserva no se puede realizar por topes";
+        header("Location: agregar.php");
+        return;
     } elseif ($mal_reservado) {$_SESSION['check_reserva'] = "La reserva no se puede realizar error en la selección de cabañas";
+        header("Location: agregar.php");
+        return;
     } else { //si no hay, agregarla
 
         $sql = "INSERT INTO reservas (inicio, final, cliente_id, n_personas, total, abono, notas) VALUES (:inicio, :final, :cliente_id, :n_personas, :total, :abono, :notas)";
@@ -363,16 +370,15 @@ if (isset($_POST['inicio']) && isset($_POST['final']) && isset($_POST['reserva0'
         }
 
         $_SESSION['check_reserva'] = "Reserva (".$reserva_id['reserva_id'].") realizada con éxito";
+        header("Location: agregar.php");
+        return;
     } 
 }
-header("Location: agregar.php");
-    return;
 } elseif(!is_numeric($_SESSION['cliente_id'])) {
     $_SESSION['check_reserva'] = "Ingrese el Cliente";
-}
-    
-
+} 
 ?>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -725,7 +731,7 @@ header("Location: agregar.php");
 
         <form method="post">
             <!-- input oculto con los datos del cliente -->
-            <input type="hidden" name="cliente_id" value=<?=$_SESSION['cliente_id']?>>
+            <input type="hidden" id="cliente_id" name="cliente_id" value=<?=$_SESSION['cliente_id']?>>
             <!-- Selección fecha de inicio y término de la reserca -->
             <p><label for="inicio">Fecha de inicio de la Reserva: </label><br>
             <input type="date" name="inicio" id="inicio" value="<?= htmlentities($_SESSION['inicio'])?>" required></p>
@@ -772,7 +778,7 @@ header("Location: agregar.php");
             <!-- <p hidden><label for="cliente_id">ID del cliente: </label><br>
             <input type="number" name="cliente_id" id="cliente_id" maxlength="8" min="0" max="99999999" value="<?= htmlentities($_SESSION['cliente_id'])?>" required>
             </p> -->
-            <span><?=$_SESSION['check_reserva']?></span>
+            <span id="check_reserva"><?=$_SESSION['check_reserva']?></span>
             <input type="submit" value="Enviar" id="submit">
 
 

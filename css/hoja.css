@@ -1,0 +1,12 @@
+table {
+    background-color: #fff;
+    width: 2500px;
+    padding: 0;
+    margin: 5px;
+    table-layout: fixed;
+}
+
+table a{
+    text-decoration: none;
+    color: #000;
+}

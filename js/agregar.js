@@ -7,7 +7,7 @@ function new_selection(n) {
     let type1 = document.createElement('select');
     type1.setAttribute('name', 'reserva' + n);
     type1.setAttribute('id', 'reserva' + n);
-    type1.setAttribute('value', "1")
+    type1.setAttribute('value', "1");
     // Define options
     let type2 = document.createElement('option');
     // Loop to create 16 + 1 rooms
@@ -43,25 +43,31 @@ function new_selection(n) {
 
     let form_elements = document.querySelectorAll('select');
     for (let i=0;i<form_elements.length;i++){
-        form_elements[i].addEventListener('click', update_preview)
-        form_elements[i].addEventListener('blur', update_preview)
+        form_elements[i].setAttribute('onchange', 'update_preview()');
     }
 
     let br = document.createElement('br');
     br.setAttribute('id', 'br_' + n);
-    section.appendChild(br)
+    section.appendChild(br);
 }
 
 function update_preview() {
-    let min = inicio.getAttribute("min")
+    let min = inicio.value;
     final.setAttribute('min',min);
+
+    let cliente_id = document.querySelector('#cliente_id');
+    // let check_reserva = document.querySelector('#check_reserva');
+    // if (!isNaN(cliente_id.value)){
+    //     check_reserva.innerHTML = "";
+    // }
+
     // select preview elements
     let preview = document.querySelectorAll('#preview span');
     // check if there are more than 1 reservation
-    let extra = false
+    let extra = false;
     let reserva = document.querySelectorAll('select');
     if (reserva.length > 2) {
-        extra = true
+        extra = true;
     };
     // loop to update preview elements
     for (let i=0; i<(preview.length); i++) {
@@ -77,19 +83,19 @@ function update_preview() {
         } else if (val_id.includes('reserva')) { //if there are more than 1 reservation
             let real_value = document.querySelector('#reserva' + n);
             if (real_value == 17){
-                preview[i].innerHTML = 'Salón'
+                preview[i].innerHTML = 'Salón';
             } else {
                 preview[i].innerHTML = 'Cabaña ' + real_value.value;
             }
             if (extra){
                 for (let j=1; j<reserva.length-1; j++){
-                    real_value = document.querySelector('#reserva'+j)
+                    real_value = document.querySelector('#reserva'+j);
                     if (real_value == 17){
-                        preview[i].innerHTML += ', Salón'
+                        preview[i].innerHTML += ', Salón';
                     } else {
                         preview[i].innerHTML += ', Cabaña' + real_value.value;
                     }
-                    n += 1
+                    n += 1;
                 }
             }
         //////// 
@@ -98,7 +104,7 @@ function update_preview() {
             if (val_id == 'total' || val_id == 'abono' && real_value.value !== '') {
                 preview[i].innerHTML = "$" + real_value.value;
             } else if (real_value.value === ''){
-                preview[i].innerHTML = "Dato faltante"
+                preview[i].innerHTML = "Dato faltante";
             } else {
                 preview[i].innerHTML = real_value.value;
             }
@@ -116,22 +122,24 @@ add_button.addEventListener('click', function() {
 
 let inicio = document.querySelector('#inicio');
 let final = document.querySelector('#final');
-const today = new Date()
-let day= today.getDate()
-let month = today.getMonth() + 1
+const today = new Date();
+let day= today.getDate();
+let month = today.getMonth() + 1;
 if (month<10){
-    month = "0" + month
+    month = "0" + month;
 }
-let year = today.getFullYear()
-let fecha = year + "-" + month + "-" + day
-inicio.setAttribute('min',fecha)
+if (day<10) {
+    day = "0" + day;
+}
+let year = today.getFullYear();
+let fecha = year + "-" + month + "-" + day;
+inicio.setAttribute('min',fecha);
 final.setAttribute('min',fecha);
 
 // add listeners to update preview
 let form_elements = document.querySelectorAll('input, select, textarea');
 for (let i=0;i<form_elements.length;i++){
-    form_elements[i].addEventListener('click', update_preview)
-    form_elements[i].addEventListener('blur', update_preview)
+    form_elements[i].setAttribute('onchange', 'update_preview()');
 }
 
 update_preview()
