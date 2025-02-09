@@ -15,6 +15,10 @@ while ($cab = $search->execute(array(':reserva_id' => $_GET['id']))){
     while ($cabanas[] = $name->fetch(PDO::FETCH_ASSOC)){}
 }
 
+$search = $pdo->prepare("SELECT * FROM clientes WHERE cliente_id = :cliente_id");
+$search->execute(array(':cliente_id' => $reserva['cliente_id']));
+$cliente = $search->fetch(PDO::FETCH_ASSOC);
+
 ?>
 
 <!DOCTYPE html>
@@ -34,7 +38,12 @@ while ($cab = $search->execute(array(':reserva_id' => $_GET['id']))){
         
         <table id="reserva" border='1'>
             <tr>
-                <th>A nombre de:</th><td><?=$reserva[]?></td>
+                <th>A nombre de:</th><td><?=$cliente['nombre']?></td>
+                <th>Númeto:</th><td><?=$cliente['numero']?></td>
+                <th>Inicio:</th><td><?=$reserva['inicio']?></td>
+                <th>Final:</th><td><?=$reserva['final']?></td>
+                <th>Inicio:</th><td><?=$reserva['inicio']?></td>
+
             </tr>
 
         </table>
