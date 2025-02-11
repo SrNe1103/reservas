@@ -8,7 +8,7 @@ $reserva = $search->fetch(PDO::FETCH_ASSOC);
 
 $search = $pdo->prepare("SELECT * FROM assign WHERE reserva_id = :reserva_id");
 $search->execute(array(':reserva_id' => $_GET['id']));
-$cabanas = []
+$cabanas = [];
 while ($cab = $search->execute(array(':reserva_id' => $_GET['id']))){
     $name = $pdo->prepare("SELECT * FROM cab WHERE cab_id = :cab_id");
     $name->execute(array(':cab_id' => $cab['cab_id']));
@@ -40,10 +40,13 @@ $cliente = $search->fetch(PDO::FETCH_ASSOC);
         <table id="reserva" border='1'>
             <tr>
                 <th>A nombre de:</th><td><?=$cliente['nombre']?></td>
-                <th>Númeto:</th><td><?=$cliente['numero']?></td>
+                <th>Número:</th><td><?=$cliente['numero']?></td>
                 <th>Inicio:</th><td><?=$reserva['inicio']?></td>
                 <th>Final:</th><td><?=$reserva['final']?></td>
-                <th>Inicio:</th><td><?=$reserva['inicio']?></td>
+                <th>Número de personas:</th><td><?=$reserva['n_personas']?></td>
+                <th>Total:</th><td>$<?=$reserva['total']?></td>
+                <th>Abono:</th><td>$<?=$reserva['abono']?></td>
+                <th>Saldo:</th><td>$<?=$reserva['total']-$reserva['abono']?></td>
 
             </tr>
 
