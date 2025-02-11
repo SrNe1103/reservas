@@ -33,9 +33,9 @@ function new_selection(n) {
     section.appendChild(del_button);
     // Add a listener to the button
     del_button.addEventListener('click', function() {
-        let delete_selection = document.querySelector('#reserva_' + n);
-        let delete_button = document.querySelector('#del_reserva_' + n);
-        let delete_br = document.querySelector('#br_' + n);
+        let delete_selection = document.querySelector('#reserva' + n);
+        let delete_button = document.querySelector('#del_reserva' + n);
+        let delete_br = document.querySelector('#br' + n);
         delete_selection.remove();
         delete_button.remove();
         delete_br.remove();
@@ -47,7 +47,7 @@ function new_selection(n) {
     }
 
     let br = document.createElement('br');
-    br.setAttribute('id', 'br_' + n);
+    br.setAttribute('id', 'br' + n);
     section.appendChild(br);
 }
 
