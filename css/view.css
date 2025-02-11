@@ -1,3 +1,14 @@
 table{
     background-color: #fff;
+    text-align: left;
+    font-size: 1.2em;
+}
+tr{
+    height: 2em;
+}
+th, td{
+    padding: 5px;
+}
+th{
+    padding-right: 10px;
 }

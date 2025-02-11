@@ -29,6 +29,7 @@ $cliente = $search->fetch(PDO::FETCH_ASSOC);
     <title>Reserva <?=$_GET['id']?></title>
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/view.css">
+    <script src="js/jquery-3.7.1.min.js"></script>
     <link rel="icon" href="favicon.ico">
 </head>
 <body>
@@ -40,18 +41,18 @@ $cliente = $search->fetch(PDO::FETCH_ASSOC);
         
         <table id="reserva" border='1'>
             <tr><th>A nombre de:</th><td><?=$cliente['nombre']?></td></tr>
-            <tr><th>Número:</th><td><?=$cliente['numero']?></td></tr>
+            <tr><th>Teléfono:</th><td><?=$cliente['telefono']?></td></tr>
             <tr><th>Inicio:</th><td><?=$reserva['inicio']?></td></tr>
             <tr><th>Final:</th><td><?=$reserva['final']?></td></tr>
-            <tr><th>Número de personas:</th><td><?=$reserva['n_personas']?></td></tr>
-            <tr><th>Total:</th><td>$<?=$reserva['total']?></td></tr>
-            <tr><th>Abono:</th><td>$<?=$reserva['abono']?></td></tr>
-            <tr><th>Saldo:</th><td>$<?=$reserva['total']-$reserva['abono']?></td></tr>
+            <tr><th>Personas:</th><td><?=$reserva['n_personas']?></td></tr>
+            <tr><th>Total:</th><td id="total"><?=$reserva['total']?></td></tr>
+            <tr><th>Abono:</th><td id="abono"><?=$reserva['abono']?></td></tr>
+            <tr><th>Saldo:</th><td id="saldo"><?=$reserva['total']-$reserva['abono']?></td></tr>
 
             
 
         </table>
-        <script src="js/hoja.js"></script>
     </section>
+    <script src="js/view.js"></script>
 </body>
 </html>
