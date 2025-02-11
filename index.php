@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reservas</title>
     <link rel="stylesheet" href="css/main.css">
+    <link rel="icon" href="favicon.ico">
 </head>
 <body>
     <h1>Administración Reservas - Ecoturismo Lemunantu</h1>

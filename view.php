@@ -28,6 +28,7 @@ $cliente = $search->fetch(PDO::FETCH_ASSOC);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reserva <?=$_GET['id']?></title>
     <link rel="stylesheet" href="css/main.css">
+    <link rel="icon" href="favicon.ico">
 </head>
 <body>
     <h1>Administración Reservas Ecoturismo Lemunantu</h1>

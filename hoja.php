@@ -13,6 +13,7 @@ require_once "pdo.php";
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/hoja.css">
     <script src="js/jquery-3.7.1.min.js"></script>
+    <link rel="icon" href="favicon.ico">
 </head>
 <body>
     <h1>Administración Reservas Ecoturismo Lemunantu</h1>

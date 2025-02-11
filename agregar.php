@@ -386,6 +386,7 @@ if (isset($_POST['inicio']) && isset($_POST['final']) && isset($_POST['reserva0'
     <title>Añadir reservas</title>
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/agregar.css">
+    <link rel="icon" href="favicon.ico">
 </head>
 <body>
 
