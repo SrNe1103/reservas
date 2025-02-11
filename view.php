@@ -9,7 +9,7 @@ $reserva = $search->fetch(PDO::FETCH_ASSOC);
 $search = $pdo->prepare("SELECT * FROM assign WHERE reserva_id = :reserva_id");
 $search->execute(array(':reserva_id' => $_GET['id']));
 $cabanas = [];
-while ($cab = $search->execute(array(':reserva_id' => $_GET['id']))){
+while ($cab = $search->fetch(PDO::FETCH_ASSOC)){
     $name = $pdo->prepare("SELECT * FROM cab WHERE cab_id = :cab_id");
     $name->execute(array(':cab_id' => $cab['cab_id']));
     while ($cabanas[] = $name->fetch(PDO::FETCH_ASSOC)){}
