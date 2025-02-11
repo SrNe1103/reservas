@@ -1,3 +1,6 @@
+function numberWithCommas(x) {
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
 function new_selection(n) {
 
     // Select element in dom to add new selection
@@ -79,7 +82,7 @@ function update_preview() {
             let total = document.querySelector('#total').value;
             let abono = document.querySelector('#abono').value;
             let saldo = total - abono;
-            preview[i].innerHTML = "$" + saldo;
+            preview[i].innerHTML = "$" + numberWithCommas(saldo);
         } else if (val_id.includes('reserva')) { //if there are more than 1 reservation
             let real_value = document.querySelector('#reserva' + n);
             if (real_value == 17){
@@ -102,7 +105,7 @@ function update_preview() {
         } else {  
             let real_value = document.querySelector('#' + val_id);
             if (val_id == 'total' || val_id == 'abono' && real_value.value !== '') {
-                preview[i].innerHTML = "$" + real_value.value;
+                preview[i].innerHTML = "$" + numberWithCommas(real_value.value);
             } else if (real_value.value === ''){
                 preview[i].innerHTML = "Dato faltante";
             } else {
