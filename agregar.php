@@ -376,7 +376,9 @@ if (isset($_POST['inicio']) && isset($_POST['final']) && isset($_POST['reserva0'
 }
 } elseif(!is_numeric($_SESSION['cliente_id'])) {
     $_SESSION['check_reserva'] = "Ingrese el Cliente";
-} 
+} else {
+    $_SESSION['check_reserva'] = "";
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -386,6 +388,7 @@ if (isset($_POST['inicio']) && isset($_POST['final']) && isset($_POST['reserva0'
     <title>Añadir reservas</title>
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/agregar.css">
+    <script src="js/jquery-3.7.1.min.js"></script>
     <link rel="icon" href="favicon.ico">
 </head>
 <body>
