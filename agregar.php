@@ -184,7 +184,7 @@ if ((isset($_POST['Agregar']) || isset($_POST['Actualizar'])) && isset($_POST['c
 
 
 // Añadir nueva reserva
-if (isset($_SESSION['check_reserva']) == false){
+if (!isset($_SESSION['check_reserva'])){
     $_SESSION['check_reserva'] = false;
     $_SESSION['reserva_duplicada'] = ['inicio' => false,
         'final' => false,
@@ -210,7 +210,6 @@ $cabs = ['inicio' => false,
         'abono' => false,
         'saldo' => false,
         'notas' => false];
-
 
 
 
@@ -282,33 +281,34 @@ if (isset($_POST['inicio']) && isset($_POST['final']) && isset($_POST['reserva0'
 
     } else {
         $disponible = TRUE; //por defecto disponible
-    $_SESSION['cabanas'] = []; //lista de cabañas asociadas a la reserva
-    $n = 0;
-    while (isset($_POST['reserva'.$n])){
-        $_SESSION['cabanas'][] = $_POST['reserva'.$n];
-        $n += 1;
-    }
-    //busco una reserva que inicie dentro del rango a reservar
-    $buscar = $pdo->prepare("SELECT reserva_id FROM reservas WHERE (inicio >= :inicio AND inicio < :final) OR (final > :inicio AND final <= :final)");
-    $buscar->execute(array(
-        ':inicio' => $_POST['inicio'],
-        ':final' => $_POST['final']
-    ));
-    $matches = [];
-    while ($match = $buscar->fetch(PDO::FETCH_ASSOC)){ //Mientras hayan coincidencias dentro del rango de fechas solicitado
-        $filtrar = $pdo->prepare("SELECT cab_id FROM assign WHERE reserva_id = :reserva_id"); //obtener el id de la cabaña
-        $filtrar->execute(array(':reserva_id' => $match['reserva_id']));
-        while ($tope = $filtrar->fetch(PDO::FETCH_ASSOC)){
-            if ($tope['cab_id'] && in_array($tope['cab_id'], $_SESSION['cabanas'])){ // Si se obtienen topes y el tope está dentro de la reserva (tope in _SESSION['cabanas']), guardar el id de la reserva 
-                $matches[] = [$match['reserva_id'], $tope];
-                $disponible = false;
+        $_SESSION['cabanas'] = []; //lista de cabañas asociadas a la reserva
+        $n = 0;
+        while (isset($_POST['reserva'.$n])){
+            $_SESSION['cabanas'][] = $_POST['reserva'.$n];
+            $n += 1;
+        }
+        //busco una reserva que inicie dentro del rango a reservar
+        $buscar = $pdo->prepare("SELECT reserva_id FROM reservas WHERE (inicio >= :inicio AND inicio < :final) OR (final > :inicio AND final <= :final)");
+        $buscar->execute(array(
+            ':inicio' => $_POST['inicio'],
+            ':final' => $_POST['final']
+        ));
+        $matches = [];
+        while ($match = $buscar->fetch(PDO::FETCH_ASSOC)){ //Mientras hayan coincidencias dentro del rango de fechas solicitado
+            $filtrar = $pdo->prepare("SELECT cab_id FROM assign WHERE reserva_id = :reserva_id"); //obtener el id de la cabaña
+            $filtrar->execute(array(':reserva_id' => $match['reserva_id']));
+            while ($tope = $filtrar->fetch(PDO::FETCH_ASSOC)){
+                if ($tope['cab_id'] && in_array($tope['cab_id'], $_SESSION['cabanas'])){ // Si se obtienen topes y el tope está dentro de la reserva (tope in _SESSION['cabanas']), guardar el id de la reserva 
+                    $matches[] = [$match['reserva_id'], $tope];
+                    $disponible = false;
+                }
+                
             }
         }
-    }
-
 
     foreach ($matches as $match){
-        if (array_search($match[0],$_SESSION['topes']) !== false){//Solo guardar el tope 1 vez
+        
+        if (!array_search($match[0],$_SESSION['topes'])){//Solo guardar el tope 1 vez
         $buscar = $pdo->prepare("SELECT * FROM reservas WHERE reserva_id = :reserva_id");
         $buscar->execute(array(':reserva_id' => $match[0]));
         $_SESSION['topes'][] = [$buscar->fetch(PDO::FETCH_ASSOC), $match[1]];
@@ -328,10 +328,12 @@ if (isset($_POST['inicio']) && isset($_POST['final']) && isset($_POST['reserva0'
             $mal_reservado = true;
         }
     }
-    if (!$disponible) {$_SESSION['check_reserva'] = "La reserva no se puede realizar por topes";
+    if (!$disponible) {
+        $_SESSION['check_reserva'] = "La reserva no se puede realizar por topes";
         header("Location: agregar.php");
         return;
-    } elseif ($mal_reservado) {$_SESSION['check_reserva'] = "La reserva no se puede realizar error en la selección de cabañas";
+    } elseif ($mal_reservado) {
+        $_SESSION['check_reserva'] = "La reserva no se puede realizar error en la selección de cabañas";
         header("Location: agregar.php");
         return;
     } else { //si no hay, agregarla
@@ -376,7 +378,7 @@ if (isset($_POST['inicio']) && isset($_POST['final']) && isset($_POST['reserva0'
 }
 } elseif(!is_numeric($_SESSION['cliente_id'])) {
     $_SESSION['check_reserva'] = "Ingrese el Cliente";
-} else {
+} elseif(!isset($_SESSION['check_reserva'])) {
     $_SESSION['check_reserva'] = "";
 }
 ?>
@@ -779,9 +781,6 @@ if (isset($_POST['inicio']) && isset($_POST['final']) && isset($_POST['reserva0'
             <p><label  for="notas">Información adicional: </label><br>
             <textarea name="notas" id="notas" maxlength="255" cols="40" rows="10"><?= htmlentities($_SESSION['notas'])?></textarea>
             </p>
-            <!-- <p hidden><label for="cliente_id">ID del cliente: </label><br>
-            <input type="number" name="cliente_id" id="cliente_id" maxlength="8" min="0" max="99999999" value="<?= htmlentities($_SESSION['cliente_id'])?>" required>
-            </p> -->
             <span id="check_reserva"><?=$_SESSION['check_reserva']?></span>
             <input type="submit" value="Enviar" id="submit">
 
@@ -835,19 +834,21 @@ if (isset($_POST['inicio']) && isset($_POST['final']) && isset($_POST['reserva0'
         
         
         <?php
+        $i = 1; 
         foreach ($_SESSION['topes'] as $tope){
             $buscar = $pdo->prepare("SELECT nombre,telefono FROM clientes WHERE cliente_id = :cliente_id");
-            $buscar->execute(array(':cliente_id' => $tope['cliente_id']));
+            $buscar->execute(array(':cliente_id' => $tope[0]['cliente_id']));
             $buscar = $buscar->fetch(PDO::FETCH_ASSOC);
             $tope[0]['cliente'] = $buscar['nombre'];
             $tope[0]['telefono'] = $buscar['telefono'];
             $add_cabanas = [];
             $n = 1;
-            while ($tope[n]){
-                $add_cabanas[] = $tope[n];
+            while (isset($tope[$n])){
+                $add_cabanas[] = $tope[$n]['cab_id'];
                 $n += 1;
             }
-            echo "<table>";
+            echo "<table class='tope' border='1'>";
+            echo "<tr> <td>Tope N°: </td> <td>".$i."</td> </tr>";
             echo "<tr>
                 <td>Inicio:</td>
                 <td><span>".htmlentities($tope[0]['inicio'])."</span></td>
@@ -867,7 +868,7 @@ if (isset($_POST['inicio']) && isset($_POST['final']) && isset($_POST['reserva0'
             </tr>
             <tr>
                 <td>Cabañas: </td>
-                <td><span>".htmlentities(implode(", ",$add_cabanas))."</span></td>
+                <td><span>Cabaña ".htmlentities(implode(", Cabaña ",$add_cabanas))."</span></td>
             </tr>
             <tr>
                 <td>Monto total:</td>
@@ -878,6 +879,7 @@ if (isset($_POST['inicio']) && isset($_POST['final']) && isset($_POST['reserva0'
                 <td><span>".htmlentities($tope[0]['notas'])."</span></td>
             </tr>";
             echo "</table>";
+            $i += 1;
         }
         ?>
     </section>

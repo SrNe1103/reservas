@@ -23,6 +23,10 @@ pre{
 table {
     font-size: 1.5em;
 }
+.tope{
+    display: inline-block;
+
+}
 td {
     padding: 0.4em;
 }
