@@ -20,7 +20,7 @@ function hoja_reservas(){
             let hoy = new Date();
             let row_day = new Date(); //set a reference day for the hoja
             if (dias == 'todas'){
-                dias = 90;
+                dias = 180;
             }
             for (let i = 0; i<dias;i++){
                 let row = "<tr>\n<td>" + row_day.toLocaleDateString('es-CL',{dateStyle: 'full'}) + "</td>"; //insert the date of the row
