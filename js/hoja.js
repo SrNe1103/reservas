@@ -19,6 +19,9 @@ function hoja_reservas(){
             $("#hoja").append("<tr>\n<th>Fecha</th><th>C1</th><th>C2</th><th>C3</th><th>C4</th><th>C5</th><th>C6</th><th>C7</th><th>C8</th><th>C9</th><th>C10</th><th>C11</th><th>C12</th><th>C13</th><th>C14</th><th>C15</th><th>C16</th><th>Salón</th>\n</tr>"); //append headers of the table
             let hoy = new Date();
             let row_day = new Date(); //set a reference day for the hoja
+            if (dias == 'todas'){
+                dias = 90;
+            }
             for (let i = 0; i<dias;i++){
                 let row = "<tr>\n<td>" + row_day.toLocaleDateString('es-CL',{dateStyle: 'full'}) + "</td>"; //insert the date of the row
                 for (let j = 1;j < 18;j++) { // insert each cabaña
