@@ -9,7 +9,7 @@ $hoy = date('y-m-d'); // set today
 $length = $_POST['dias']; // recieve an input of days since today
 // $length = 7;
 if ($length == 'todas'){ // if input is set to all, set a far enough date
-    $dias = '3000-12-31';
+    $dias = date('y-m-d', strtotime('+ 1 year'));
 } else {
     $dias = date('y-m-d', strtotime('+ '.$length.' days')); // if it's numeric, set a date since today with that span
 }
